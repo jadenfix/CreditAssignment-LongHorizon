@@ -1,0 +1,51 @@
+seed: 0
+out_dir: artifacts/runs/${method.name}_${task.name}_${seed}
+
+fairness:
+  # Fairness guards — all methods in one sweep MUST match these.
+  base_ckpt_hash: null
+  total_train_tokens: null
+  total_opt_steps: 100
+  prompt_template_hash: null   # filled in by loader from cts.methods._batch.prompt_template_hash
+  decode_temperature: 1.0
+  verifier_id: null
+  revision_budget: 1
+  test_compute_budget: null
+
+trainer:
+  lr: 3e-4
+  batch_size: 4
+  max_steps: 100
+  warmup_steps: 10
+  grad_clip: 1.0
+  log_every: 10
+  ckpt_every: 100
+
+backend:
+  kind: local_nano    # local_nano | local_hf | tunix | maxtext
+  nano:
+    hidden_size: 32
+    num_layers: 2
+    num_heads: 4
+    vocab_size: 128
+    max_seq_len: 384
+    seed: 0
+
+task:
+  name: fixtures_math
+  replay_path: src/cts/data/fixtures/gsm8k_tiny.jsonl
+  split_train: train
+  split_val: val
+  split_test: test
+  domain: math
+
+method:
+  name: cts
+
+# Method-specific defaults (overridden by configs/method/*.yaml)
+method_cfg: {}
+
+eval:
+  enabled: true
+  every: 50
+  max_examples: 16

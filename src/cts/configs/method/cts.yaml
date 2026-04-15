@@ -1,0 +1,45 @@
+method:
+  name: cts
+
+method_cfg:
+  # Loss weights
+  lam_align: 1.0      # λ₁ alignment weight (A1: set 0)
+  lam_decode: 1.0     # λ₂ decode-anchor weight (A4: set 0)
+  lam_energy: 0.1     # λ₃ energy-critic contrastive weight
+  edit_eta: 0.1
+
+  # Ablation toggles
+  use_ref_trajectory: true
+  online_critique: false   # A6: false = offline replay, true = refresh each step
+
+  alignment:
+    kind: sinkhorn         # A2: l2  |  A3: soft_dtw
+    weight: 1.0
+    epsilon: 0.1
+    time_alpha: 0.2
+    num_iters: 50
+    unbalanced_tau: null
+    use_ott: true
+    gamma: 1.0
+
+  projection:
+    hidden_size: 32
+    out_dim: 32
+    num_layers: 2
+
+  energy:
+    r_dim: 32
+    f_dim: 32
+    hidden: 64
+    edit_eta: 0.1
+    freeze: false          # A5: true
+
+  grpo:
+    kl_coef: 0.01
+    clip: 0.2
+    eps: 1.0e-6
+
+  # GRPO rollout settings
+  group_size: 4
+  max_new_tokens: 24
+  max_len: 128

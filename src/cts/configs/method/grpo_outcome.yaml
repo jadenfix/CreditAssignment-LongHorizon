@@ -1,0 +1,8 @@
+method:
+  name: grpo_outcome
+method_cfg:
+  group_size: 4
+  max_new_tokens: 24
+  kl_coef: 0.01
+  clip: 0.2
+  reward: outcome

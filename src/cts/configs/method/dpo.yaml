@@ -1,0 +1,5 @@
+method:
+  name: dpo
+method_cfg:
+  beta: 0.1
+  max_len: 128

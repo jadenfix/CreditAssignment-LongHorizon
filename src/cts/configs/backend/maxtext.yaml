@@ -1,0 +1,7 @@
+backend:
+  kind: maxtext
+  maxtext:
+    config_name: base.yml
+    model_name: llama2-7b      # replace with whatever your MaxText tree supports
+    mesh_shape: [1, 1]         # filled in per-host in M9
+    max_target_length: 1024

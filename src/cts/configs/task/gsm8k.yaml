@@ -1,0 +1,7 @@
+task:
+  name: gsm8k
+  replay_path: artifacts/replay/gsm8k
+  split_train: train
+  split_val: val
+  split_test: test
+  domain: math

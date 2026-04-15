@@ -1,0 +1,4 @@
+method:
+  name: sft_revision
+method_cfg:
+  max_len: 128

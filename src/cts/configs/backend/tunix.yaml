@@ -1,0 +1,6 @@
+backend:
+  kind: tunix
+  tunix:
+    trainer: grpo        # sft | dpo | ppo | grpo
+    model_name: Qwen2.5-1.5B   # placeholder; wired in M8
+    mesh_shape: [1, 1]

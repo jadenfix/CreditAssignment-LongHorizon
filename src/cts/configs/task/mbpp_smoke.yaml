@@ -1,0 +1,7 @@
+task:
+  name: mbpp_smoke
+  replay_path: src/cts/data/fixtures/apps_tiny.jsonl
+  split_train: train
+  split_val: val
+  split_test: test
+  domain: code

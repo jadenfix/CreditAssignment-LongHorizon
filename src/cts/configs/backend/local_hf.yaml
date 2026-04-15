@@ -1,0 +1,4 @@
+backend:
+  kind: local_hf
+  hf:
+    model_name: distilgpt2
