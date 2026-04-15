@@ -16,12 +16,7 @@ import numpy as np
 from ..data.schema import Quadruple
 from ..utils.tokenizer import BOS, EOS, PAD, SEP, ByteTokenizer
 
-_PROMPT_TEMPLATE = (
-    "PROB: {x}\n"
-    "ATT0: {y0}\n"
-    "CRIT: {f}\n"
-    "REV1:"
-)
+_PROMPT_TEMPLATE = "PROB: {x}\nATT0: {y0}\nCRIT: {f}\nREV1:"
 
 
 def prompt_template_hash() -> str:
@@ -34,11 +29,11 @@ def render_prompt(q: Quadruple) -> str:
 
 @dataclass
 class TokenizedBatch:
-    input_ids: jnp.ndarray     # [B, T]  prompt + y1 tokens
-    target_ids: jnp.ndarray    # [B, T]  next-token targets (shift of input_ids)
-    y1_mask: jnp.ndarray       # [B, T]  1 on y1 positions, 0 elsewhere
-    prompt_lens: jnp.ndarray   # [B]     length of prompt region in input_ids
-    total_lens: jnp.ndarray    # [B]
+    input_ids: jnp.ndarray  # [B, T]  prompt + y1 tokens
+    target_ids: jnp.ndarray  # [B, T]  next-token targets (shift of input_ids)
+    y1_mask: jnp.ndarray  # [B, T]  1 on y1 positions, 0 elsewhere
+    prompt_lens: jnp.ndarray  # [B]     length of prompt region in input_ids
+    total_lens: jnp.ndarray  # [B]
 
 
 def encode_batch(

@@ -35,8 +35,8 @@ def group_relative_advantages(rewards: jax.Array, eps: float = 1e-6) -> jax.Arra
 def grpo_surrogate_loss(
     logprobs_new: jax.Array,  # [B, G, T]
     logprobs_old: jax.Array,  # [B, G, T] (stop-grad)
-    mask: jax.Array,          # [B, G, T]
-    advantages: jax.Array,    # [B, G]
+    mask: jax.Array,  # [B, G, T]
+    advantages: jax.Array,  # [B, G]
     cfg: GRPOCfg,
 ) -> jax.Array:
     logprobs_old = jax.lax.stop_gradient(logprobs_old)

@@ -7,9 +7,10 @@ instead; this loop exists so every method can be smoke-tested on nano-LM.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import jax
 import optax
@@ -74,7 +75,7 @@ def train_local(
     rests = tuple(x[2] for x in graphdefs_and_rest)
 
     def _merge(params):
-        return tuple(nnx.merge(g, p, r) for g, p, r in zip(graphdefs, params, rests))
+        return tuple(nnx.merge(g, p, r) for g, p, r in zip(graphdefs, params, rests, strict=False))
 
     base_opt = _make_optimizer(cfg)
     if freeze_mask is not None:
@@ -90,7 +91,8 @@ def train_local(
     logger = JSONLLogger(Path(log_dir) / "train.jsonl")
 
     for step in range(cfg.max_steps):
-        def loss_and_metrics(params):
+
+        def loss_and_metrics(params, step=step):
             merged = _merge(params)
             if multi:
                 return step_fn(*merged, step)
@@ -104,7 +106,7 @@ def train_local(
             logger.log(step, {"loss": float(loss), **{k: float(v) for k, v in metrics.items()}})
 
     # Write final params back to the user-visible module objects (outside trace).
-    for m, p in zip(modules, params):
+    for m, p in zip(modules, params, strict=False):
         nnx.update(m, p)
 
     logger.close()

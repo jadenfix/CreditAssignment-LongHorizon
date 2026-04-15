@@ -11,3 +11,39 @@ __pycache__/
 .DS_Store
 *.orbax-checkpoint-tmp*
 .env*
+
+# Build / dist
+/build/
+/dist/
+*.whl
+
+# Coverage
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Python tooling
+.python-version
+.tox/
+.nox/
+
+# GCP credentials — never commit service-account keys
+*-credentials.json
+*-key.json
+service-account*.json
+gcp-key*.json
+.gcloud/
+application_default_credentials.json

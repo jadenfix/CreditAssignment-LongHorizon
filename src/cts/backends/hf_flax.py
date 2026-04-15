@@ -22,9 +22,7 @@ class HFFlaxLM:
         try:
             from transformers import AutoTokenizer, FlaxAutoModelForCausalLM
         except Exception as e:  # pragma: no cover
-            raise ImportError(
-                "HFFlaxLM requires `transformers`. Install `cts[hf]`."
-            ) from e
+            raise ImportError("HFFlaxLM requires `transformers`. Install `cts[hf]`.") from e
         self.tok = AutoTokenizer.from_pretrained(model_name)
         if self.tok.pad_token is None:
             self.tok.pad_token = self.tok.eos_token
@@ -62,7 +60,7 @@ class HFFlaxLM:
             logps.append(lp[jnp.arange(tokens.shape[0]), nxt])
             hiddens.append(fo.hidden[:, -1])
             tokens = jnp.concatenate([tokens, nxt[:, None]], axis=-1)
-        gen = tokens[:, prompt_tokens.shape[-1]:]
+        gen = tokens[:, prompt_tokens.shape[-1] :]
         return GenerateOut(
             tokens=gen,
             hidden=jnp.stack(hiddens, axis=1),

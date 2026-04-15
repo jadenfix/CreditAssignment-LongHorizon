@@ -17,6 +17,38 @@ JAX · Flax NNX · Optax · Orbax · OTT-JAX (entropic / unbalanced Sinkhorn) ·
 `LocalModelAPI` — the smoke / unit-test path (nano-LM, optional HF Flax). Lets every loss and method run on a laptop.
 `ScaleBackendAdapter` — the sharding-aware path. Two impls: `TunixAdapter` (M8) and `MaxTextAdapter` (M9). Methods are written against one side or the other; we deliberately do **not** force them through a single protocol.
 
+## Run the paper
+
+The full experiment matrix (B0–B5 × {gsm8k, apps} × seeds) is driven by one script:
+
+```bash
+# Local CPU smoke (fixtures, 2 seeds, math only)
+make matrix-local                                # → artifacts/results/smoke/table.md
+
+# Real run (after generating teacher data)
+make teacher-data                                # honors $TEACHER, $TRAIN_LIMIT, etc.
+uv run python scripts/run_paper_matrix.py \
+  --backend tunix --tasks both --seeds 5 \
+  --max-steps 2000 --out artifacts/results/paper/
+uv run python scripts/aggregate_results.py \
+  artifacts/results/paper/ --base B3 --out artifacts/results/paper/table.md
+```
+
+The matrix orchestrator asserts the fairness fingerprint matches across cells before
+launching a single training job (see `cts.train.fairness.assert_consistent`).
+
+## Deploy to GCP
+
+See [deploy/README.md](deploy/README.md). TL;DR:
+
+```bash
+gcloud builds submit --config deploy/cloudbuild.yaml .          # build + push images
+PROJECT=… ZONE=… TPU_NAME=… IMAGE_TAG=… GCS_BUCKET=… \
+  bash deploy/launch_tpu.sh                                     # reserve TPU + run matrix
+```
+
+`DRY_RUN=1` prints the `gcloud` invocations without executing.
+
 ## Quickstart
 
 ```bash

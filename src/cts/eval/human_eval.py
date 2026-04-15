@@ -10,8 +10,8 @@ from __future__ import annotations
 import csv
 import json
 import random
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from ..data.schema import Quadruple
 
@@ -44,7 +44,13 @@ def export_blinded(
                 "candidate_right": right,
             }
         )
-        key.append({"row_id": i, "left": label_b if swap else label_a, "right": label_a if swap else label_b})
+        key.append(
+            {
+                "row_id": i,
+                "left": label_b if swap else label_a,
+                "right": label_a if swap else label_b,
+            }
+        )
     csv_path = out_dir / "human_eval.csv"
     key_path = out_dir / "human_eval.key.json"
     with csv_path.open("w", newline="", encoding="utf-8") as fh:

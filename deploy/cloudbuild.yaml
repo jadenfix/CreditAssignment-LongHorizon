@@ -1,0 +1,40 @@
+# Build + push CPU and TPU images to Artifact Registry.
+# Trigger: gcloud builds submit --config deploy/cloudbuild.yaml .
+substitutions:
+  _REGION: us-central1
+  _REPO: cts
+  _TAG: ${SHORT_SHA}
+
+steps:
+  - id: build-cpu
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - deploy/Dockerfile.cpu
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/cpu:${_TAG}
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/cpu:latest
+      - .
+  - id: build-tpu
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - deploy/Dockerfile.tpu
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/tpu:${_TAG}
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/tpu:latest
+      - .
+  - id: push-cpu
+    name: gcr.io/cloud-builders/docker
+    args: [push, --all-tags, "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/cpu"]
+  - id: push-tpu
+    name: gcr.io/cloud-builders/docker
+    args: [push, --all-tags, "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/tpu"]
+
+options:
+  machineType: E2_HIGHCPU_8
+timeout: 1800s

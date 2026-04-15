@@ -7,6 +7,7 @@ pytest run. Untrusted code execution — keep the trust boundary obvious.
 
 from __future__ import annotations
 
+import contextlib
 import math
 import re
 import resource
@@ -71,10 +72,8 @@ class CodeVerifier:
         def limit_resources() -> None:  # pragma: no cover — subprocess init
             resource.setrlimit(resource.RLIMIT_CPU, (int(self.timeout_sec) + 1,) * 2)
             bytes_ = self.memory_mb * 1024 * 1024
-            try:
+            with contextlib.suppress(Exception):
                 resource.setrlimit(resource.RLIMIT_AS, (bytes_, bytes_))
-            except Exception:
-                pass
 
         with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as fh:
             fh.write(code)
@@ -91,10 +90,8 @@ class CodeVerifier:
         except subprocess.TimeoutExpired:
             return False
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 path.unlink(missing_ok=True)
-            except Exception:
-                pass
 
     def score(self, task_id: str, output: str) -> float:
         tests = self.tests.get(task_id)

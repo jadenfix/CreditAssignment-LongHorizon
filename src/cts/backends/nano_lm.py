@@ -134,7 +134,9 @@ class NanoLM(nnx.Module):
     def params(self) -> Any:
         return nnx.state(self, nnx.Param)
 
-    def apply_grads(self, grads: Any, lr: float) -> None:  # pragma: no cover - overwritten by trainer
+    def apply_grads(
+        self, grads: Any, lr: float
+    ) -> None:  # pragma: no cover - overwritten by trainer
         raise NotImplementedError(
             "NanoLM does not own the optimizer; use cts.train.loop which wraps Optax."
         )

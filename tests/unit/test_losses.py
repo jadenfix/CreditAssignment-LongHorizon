@@ -48,7 +48,9 @@ def test_alignment_dispatcher_routes():
     b = jax.random.normal(rng, (2, 5, 4))
     l2 = alignment_loss(a, b, AlignmentCfg(kind="l2", weight=1.0))
     dtw = alignment_loss(a, b, AlignmentCfg(kind="soft_dtw", weight=1.0, gamma=1.0))
-    sk = alignment_loss(a, b, AlignmentCfg(kind="sinkhorn", weight=1.0, num_iters=20, use_ott=False))
+    sk = alignment_loss(
+        a, b, AlignmentCfg(kind="sinkhorn", weight=1.0, num_iters=20, use_ott=False)
+    )
     zero = alignment_loss(a, b, AlignmentCfg(kind="sinkhorn", weight=0.0))
     for v in (l2, dtw, sk):
         assert jnp.isfinite(v)

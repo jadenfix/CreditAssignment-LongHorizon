@@ -15,9 +15,11 @@ def test_math_verifier():
 
 
 def test_code_verifier_pass_and_fail():
-    v = CodeVerifier(tests={
-        "ok": ["assert add(1,2) == 3"],
-        "bad": ["assert add(1,2) == 3"],
-    })
+    v = CodeVerifier(
+        tests={
+            "ok": ["assert add(1,2) == 3"],
+            "bad": ["assert add(1,2) == 3"],
+        }
+    )
     assert v.score("ok", "def add(a,b):\n    return a+b") == 1.0
     assert v.score("bad", "def add(a,b):\n    return a-b") == 0.0

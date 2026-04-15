@@ -62,8 +62,8 @@ def _fallback_sinkhorn(
 
 
 def sinkhorn_divergence_loss(
-    R_a: jax.Array,        # [B, T_a, D]
-    R_b: jax.Array,        # [B, T_b, D]
+    R_a: jax.Array,  # [B, T_a, D]
+    R_b: jax.Array,  # [B, T_b, D]
     *,
     epsilon: float = 0.1,
     time_alpha: float = 0.2,
@@ -93,7 +93,6 @@ def sinkhorn_divergence_loss(
             from ott.tools.sinkhorn_divergence import sinkhorn_divergence
 
             def per_batch(a: jax.Array, b: jax.Array) -> jax.Array:
-                geom = pointcloud.PointCloud(a, b, epsilon=epsilon)
                 kwargs: dict = {"max_iterations": num_iters}
                 if unbalanced_tau is not None:
                     kwargs.update({"tau_a": unbalanced_tau, "tau_b": unbalanced_tau})
@@ -106,6 +105,6 @@ def sinkhorn_divergence_loss(
         except Exception:  # pragma: no cover - fallback path
             pass
 
-    return jax.vmap(
-        lambda a, b: _fallback_sinkhorn(a, b, epsilon=epsilon, num_iters=num_iters)
-    )(R_a_t, R_b_t).mean()
+    return jax.vmap(lambda a, b: _fallback_sinkhorn(a, b, epsilon=epsilon, num_iters=num_iters))(
+        R_a_t, R_b_t
+    ).mean()

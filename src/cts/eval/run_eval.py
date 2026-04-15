@@ -46,9 +46,7 @@ def evaluate(
         buckets[k]["y0"].append(a)
         buckets[k]["y1"].append(b)
     per_bucket = {
-        str(k): delta_critique(
-            [q for q in quads if bucket_horizon(q) == k], v["y0"], v["y1"]
-        )
+        str(k): delta_critique([q for q in quads if bucket_horizon(q) == k], v["y0"], v["y1"])
         for k, v in buckets.items()
     }
     return {"headline": headline, "bootstrap": boot, "wilcoxon": wx, "buckets": per_bucket}

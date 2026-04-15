@@ -15,6 +15,22 @@
 - Tests: `uv run pytest -q`. Mark slow paths with `@pytest.mark.slow`.
 - No emojis or decorative comments. Comments only when *why* is non-obvious.
 
+## Make targets
+
+- `make setup` / `make setup-all` — sync deps (core / + hf, teacher, gcp).
+- `make fmt` / `make lint` / `make type` / `make test` — the usual.
+- `make smoke` — `scripts/smoke_all_methods.sh`.
+- `make matrix-local` — run the paper matrix on CPU fixtures + aggregate.
+- `make teacher-data` — generate the full replay shards (needs API keys).
+- `make docker-cpu` / `make docker-tpu` — build deploy images locally.
+
+## `deploy/` boundary
+
+Anything under `deploy/` is launchers, Dockerfiles, and Cloud Build config — **no
+algorithm code**. The CPU image runs CI smoke; the TPU image is the actual training
+target. `deploy/launch_tpu.sh` and `deploy/launch_vertex.py` are the only entry
+points; both honor a `DRY_RUN=1` env to print the underlying `gcloud` invocations.
+
 ## Common workflows
 
 Generate teacher data into a replay shard:

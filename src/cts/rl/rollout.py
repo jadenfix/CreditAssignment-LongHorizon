@@ -16,8 +16,8 @@ from ..backends.local_api import DecodeCfg, LocalModelAPI
 
 @dataclass
 class Rollout:
-    tokens: jax.Array    # [B, T_out]
-    hidden: jax.Array    # [B, T_out, D]
+    tokens: jax.Array  # [B, T_out]
+    hidden: jax.Array  # [B, T_out, D]
     logprobs: jax.Array  # [B, T_out]
 
 

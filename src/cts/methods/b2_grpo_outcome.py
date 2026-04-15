@@ -9,12 +9,11 @@ gradients, shapes, and Δ_critique end-to-end on nano-LM.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 import jax
 import jax.numpy as jnp
 
-from ..backends.local_api import DecodeCfg, LocalModelAPI
+from ..backends.local_api import LocalModelAPI
 from ..rl.grpo import GRPOCfg, approx_kl, group_relative_advantages, grpo_surrogate_loss
 
 NAME = "grpo_outcome"
@@ -22,11 +21,11 @@ NAME = "grpo_outcome"
 
 @dataclass
 class GRPOBatch:
-    prompt_ids: jnp.ndarray      # [B, T_in]
+    prompt_ids: jnp.ndarray  # [B, T_in]
     completion_ids: jnp.ndarray  # [B, G, T_out]
-    mask: jnp.ndarray            # [B, G, T_out]
-    logprobs_old: jnp.ndarray    # [B, G, T_out]
-    rewards: jnp.ndarray         # [B, G]
+    mask: jnp.ndarray  # [B, G, T_out]
+    logprobs_old: jnp.ndarray  # [B, G, T_out]
+    rewards: jnp.ndarray  # [B, G]
 
 
 def step(
@@ -46,8 +45,8 @@ def step(
     # logits at position i predict token i+1. Completion tokens occupy positions
     # [T_in, T_in+T-1] in `full`; their generation logprobs are therefore at
     # prediction positions [T_in-1, T_in+T-2]. Slice those directly.
-    tgt = full[:, 1:]                               # [B*G, L-1] — next-token targets
-    logp_next = logp[:, :-1, :]                     # [B*G, L-1, V] — aligned predictions
+    tgt = full[:, 1:]  # [B*G, L-1] — next-token targets
+    logp_next = logp[:, :-1, :]  # [B*G, L-1, V] — aligned predictions
     tok_lp = jnp.take_along_axis(logp_next, tgt[..., None], axis=-1)[..., 0]  # [B*G, L-1]
     comp_slice = tok_lp[:, -T:].reshape(B, G, T)
 
