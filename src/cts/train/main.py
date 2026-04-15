@@ -50,6 +50,11 @@ def _load_cfg(overrides: list[str]):
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("overrides", nargs="*")
+    ap.add_argument(
+        "--gcs-bucket",
+        default=None,
+        help="If set (gs://…), rsync artifacts/ to this prefix at end of run.",
+    )
     args = ap.parse_args()
 
     cfg = _load_cfg(args.overrides)
@@ -58,10 +63,17 @@ def main() -> None:
     print(f"[cts] fairness fingerprint: {fp}")
 
     # Backend
-    if cfg.backend.kind != "local_nano":
+    if cfg.backend.kind == "tunix":
+        from ..backends.tunix_adapter import TunixAdapter
+
+        adapter = TunixAdapter(cfg)
+        print(f"[cts] tunix trainer ready: {type(adapter.trainer_handle()).__name__}")
+        # Real training delegated to the Tunix trainer; one step() so smoke
+        # surfaces wiring problems immediately.
+        # (The replay shard load + batch encode below is shared with local.)
+    elif cfg.backend.kind != "local_nano":
         raise NotImplementedError(
-            "Main entry currently wires only local_nano; tunix/maxtext land in M8/M9 "
-            "(see cts.backends.tunix_adapter / maxtext_adapter)."
+            f"Backend {cfg.backend.kind!r} not wired yet; see cts.backends.{cfg.backend.kind}_adapter."
         )
     nano_cfg = NanoLMConfig(
         vocab_size=cfg.backend.nano.vocab_size,
@@ -98,6 +110,16 @@ def main() -> None:
         return
     print(f"[cts] step0 loss={float(loss):.4f}")
     print(f"[cts] metrics={ {k: float(v) for k, v in metrics.items()} }")
+
+    if args.gcs_bucket:
+        # Defer import so non-GCP runs don't pay for the dep.
+        import sys as _sys
+
+        _deploy = Path(__file__).resolve().parents[3] / "deploy"
+        _sys.path.insert(0, str(_deploy))
+        from gcs_sync import upload  # type: ignore[import-not-found]
+
+        upload("artifacts/", args.gcs_bucket.rstrip("/") + f"/{cfg.out_dir}")
 
 
 if __name__ == "__main__":

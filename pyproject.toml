@@ -30,6 +30,7 @@ ot = ["ott-jax>=0.4.7"]
 hf = ["transformers>=4.44", "datasets>=2.20", "tokenizers>=0.19"]
 teacher = ["anthropic>=0.34", "openai>=1.40"]
 scale = ["tunix"]
+gcp = ["google-cloud-storage>=2.16", "google-cloud-aiplatform>=1.60"]
 dev = ["pytest>=8", "pytest-xdist>=3", "ruff>=0.6", "pyright>=1.1"]
 
 [project.scripts]

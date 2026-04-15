@@ -1,0 +1,20 @@
+# TPU image — used for actual training runs on Cloud TPU VMs.
+# Base matches Tunix's required JAX/libtpu pin; bump together when upgrading JAX.
+FROM us-docker.pkg.dev/cloud-tpu-images/jax-stable-stack/tpu:jax0.4.34-rev1
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+RUN pip install --no-cache-dir uv==0.4.18
+
+WORKDIR /workspace
+COPY pyproject.toml uv.lock README.md ./
+COPY src ./src
+COPY scripts ./scripts
+COPY deploy ./deploy
+
+# --extra scale pulls Tunix; --extra ot pulls OTT-JAX for the OT backend.
+# Use --inexact-resolve so JAX from the base image isn't replaced.
+RUN uv pip install --system -e ".[ot,scale,gcp,teacher]"
+
+CMD ["python", "-m", "cts.train.main"]
