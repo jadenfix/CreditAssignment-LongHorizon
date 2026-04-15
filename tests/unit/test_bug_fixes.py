@@ -31,10 +31,13 @@ def _grpo_batch(model, B=2, G=2, T_in=5, T_out=4):
     mask = jnp.ones((B, G, T_out))
     old_lp = jnp.zeros((B, G, T_out))
     rewards = jax.random.uniform(jax.random.PRNGKey(3), (B, G))
-    return GRPOBatch(prompt_ids=prompt, completion_ids=comp, mask=mask, logprobs_old=old_lp, rewards=rewards)
+    return GRPOBatch(
+        prompt_ids=prompt, completion_ids=comp, mask=mask, logprobs_old=old_lp, rewards=rewards
+    )
 
 
 # ---- Bug #1: GRPO next-token alignment ---------------------------------------
+
 
 def test_grpo_token_logprobs_match_manual_alignment():
     """The internal ``comp_slice`` must equal log π_θ(c_t | prompt + c_{<t})
@@ -53,9 +56,7 @@ def test_grpo_token_logprobs_match_manual_alignment():
     # prediction position T_in + t - 1, for t in [0, T-1].
     expected = jnp.stack(
         [
-            jnp.take_along_axis(
-                logp[:, T_in + t - 1, :], full[:, T_in + t][:, None], axis=-1
-            )[:, 0]
+            jnp.take_along_axis(logp[:, T_in + t - 1, :], full[:, T_in + t][:, None], axis=-1)[:, 0]
             for t in range(T)
         ],
         axis=-1,
@@ -83,6 +84,7 @@ def test_grpo_step_has_no_padding_position():
 
 # ---- Bug #2: backbone gradient through alignment -----------------------------
 
+
 def _cts_setup(model, use_input_ids: bool, B=2, T=10):
     cfg = CTSCfg(lam_align=1.0, lam_decode=0.0, lam_energy=0.0)
     cfg.projection.hidden_size = model.hidden_size
@@ -93,7 +95,10 @@ def _cts_setup(model, use_input_ids: bool, B=2, T=10):
     modules = CTSModules(cfg, rngs=nnx.Rngs(0))
 
     grpo = _grpo_batch(model)
-    ids = lambda k: jax.random.randint(jax.random.PRNGKey(k), (B, T), 0, model.vocab_size)
+
+    def ids(k):
+        return jax.random.randint(jax.random.PRNGKey(k), (B, T), 0, model.vocab_size)
+
     if use_input_ids:
         batch = CTSBatch(
             grpo=grpo,
@@ -168,6 +173,7 @@ def test_alignment_reaches_backbone_via_bad_input_ids():
 
 # ---- Bug #3: combined param tree in trainer ----------------------------------
 
+
 def test_train_local_updates_cts_modules(tmp_path):
     from cts.train.loop import LoopCfg, train_local
 
@@ -195,7 +201,7 @@ def test_train_local_updates_cts_modules(tmp_path):
     def _changed(a, b):
         return sum(
             float(jnp.sum(jnp.abs(x - y)))
-            for x, y in zip(jax.tree.leaves(a), jax.tree.leaves(b))
+            for x, y in zip(jax.tree.leaves(a), jax.tree.leaves(b), strict=False)
         )
 
     assert _changed(before_proj, after_proj) > 0.0
@@ -204,6 +210,7 @@ def test_train_local_updates_cts_modules(tmp_path):
 
 
 # ---- Bug #4: A5 freeze suppresses gradient to E_psi --------------------------
+
 
 def test_a5_freeze_zeros_energy_critic_grad():
     """With cfg.energy.freeze=True, ∂L/∂ψ must be exactly zero, while gradient

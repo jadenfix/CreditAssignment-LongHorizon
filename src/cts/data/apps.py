@@ -51,9 +51,7 @@ def tests_map(split: str = "test", limit: int | None = None) -> dict[str, list[s
         outputs = io.get("outputs", [])
         asserts: list[str] = []
         for x, y in zip(inputs, outputs, strict=False):
-            asserts.append(
-                f"assert str(solve({x!r})).strip() == str({y!r}).strip()"
-            )
+            asserts.append(f"assert str(solve({x!r})).strip() == str({y!r}).strip()")
         if asserts:
             out[p["task_id"]] = asserts
     return out

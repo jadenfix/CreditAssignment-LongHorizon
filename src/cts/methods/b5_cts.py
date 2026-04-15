@@ -36,13 +36,13 @@ NAME = "cts"
 
 @dataclass
 class CTSCfg:
-    lam_align: float = 1.0   # λ₁
+    lam_align: float = 1.0  # λ₁
     lam_decode: float = 1.0  # λ₂
     lam_energy: float = 0.1  # λ₃
     edit_eta: float = 0.1
     # Ablations
-    use_ref_trajectory: bool = True     # if False, align only to R*
-    online_critique: bool = False       # A6: refresh critique from current policy each step
+    use_ref_trajectory: bool = True  # if False, align only to R*
+    online_critique: bool = False  # A6: refresh critique from current policy each step
     # Sub-configs
     alignment: AlignmentCfg = field(default_factory=AlignmentCfg)
     projection: ProjectionCfg = field(default_factory=ProjectionCfg)
@@ -80,14 +80,14 @@ class CTSBatch:
     """
 
     grpo: GRPOBatch
-    input_ids: jnp.ndarray                 # [B, T] prompt + y1 (decode anchor)
-    target_ids: jnp.ndarray                # [B, T]
-    y1_mask: jnp.ndarray                   # [B, T]
-    critique_ids: jnp.ndarray              # [B, T_f]
+    input_ids: jnp.ndarray  # [B, T] prompt + y1 (decode anchor)
+    target_ids: jnp.ndarray  # [B, T]
+    y1_mask: jnp.ndarray  # [B, T]
+    critique_ids: jnp.ndarray  # [B, T_f]
     ref_hidden: jnp.ndarray | None = None  # [B, T_ref, D] teacher-forced y1 hidden
     bad_hidden: jnp.ndarray | None = None  # [B, T_bad, D] teacher-forced y0 hidden
-    bad_input_ids: jnp.ndarray | None = None   # [B, T_bad] y0 path token ids
-    ref_input_ids: jnp.ndarray | None = None   # [B, T_ref] y1 path token ids
+    bad_input_ids: jnp.ndarray | None = None  # [B, T_bad] y0 path token ids
+    ref_input_ids: jnp.ndarray | None = None  # [B, T_ref] y1 path token ids
 
 
 def _critic_view(critic: EnergyCritic, *, freeze: bool) -> EnergyCritic:
@@ -125,8 +125,8 @@ def step(
     out_grpo = model.forward(full)
     logp = jax.nn.log_softmax(out_grpo.logits, axis=-1)
     # Align logits→next-token correctly: logit[i] predicts token i+1.
-    tgt = full[:, 1:]                       # [B*G, L-1]
-    logp_next = logp[:, :-1, :]             # [B*G, L-1, V]
+    tgt = full[:, 1:]  # [B*G, L-1]
+    logp_next = logp[:, :-1, :]  # [B*G, L-1, V]
     tok_lp = jnp.take_along_axis(logp_next, tgt[..., None], axis=-1)[..., 0]
     comp_slice = tok_lp[:, -T:].reshape(B, G, T)
     A = group_relative_advantages(g.rewards, cfg.grpo.eps)
@@ -150,7 +150,7 @@ def step(
     else:
         assert batch.bad_hidden is not None, "CTSBatch needs bad_input_ids or bad_hidden"
         bad_hidden = batch.bad_hidden
-    R_theta = modules.projection(bad_hidden)          # [B, T_bad, r_dim]
+    R_theta = modules.projection(bad_hidden)  # [B, T_bad, r_dim]
 
     # Build R*. Freeze the critic parameters when A5 ablation is on — we still
     # need gradient w.r.t. R (inputs) for the edit step, so we sg the critic's
@@ -175,8 +175,11 @@ def step(
     # The energy term is about training E_psi, so detach hidden → no backbone
     # grad here; and when A5 freeze is set, also detach the critic's params so
     # this loss is a no-op on psi.
-    R_good_in = jax.lax.stop_gradient(ref_hidden) if cfg.use_ref_trajectory and batch.ref_input_ids is not None \
-                else (jax.lax.stop_gradient(batch.ref_hidden) if batch.ref_hidden is not None else None)
+    R_good_in = (
+        jax.lax.stop_gradient(ref_hidden)
+        if cfg.use_ref_trajectory and batch.ref_input_ids is not None
+        else (jax.lax.stop_gradient(batch.ref_hidden) if batch.ref_hidden is not None else None)
+    )
     if R_good_in is None:
         # No ref available (cfg.use_ref_trajectory=False and no raw ref_hidden) — skip energy loss.
         e_loss = jnp.asarray(0.0)

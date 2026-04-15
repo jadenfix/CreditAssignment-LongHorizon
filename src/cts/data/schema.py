@@ -51,8 +51,14 @@ class Quadruple(BaseModel):
 
     def content_hash(self) -> str:
         payload = json.dumps(
-            {"x": self.x, "y0": self.y0, "f": self.f, "y1": self.y1,
-             "task_id": self.meta.task_id, "domain": self.meta.domain},
+            {
+                "x": self.x,
+                "y0": self.y0,
+                "f": self.f,
+                "y1": self.y1,
+                "task_id": self.meta.task_id,
+                "domain": self.meta.domain,
+            },
             sort_keys=True,
         )
         return hashlib.sha256(payload.encode()).hexdigest()[:16]
@@ -61,7 +67,7 @@ class Quadruple(BaseModel):
         return self.model_dump_json()
 
     @classmethod
-    def from_jsonl(cls, line: str) -> "Quadruple":
+    def from_jsonl(cls, line: str) -> Quadruple:
         return cls.model_validate_json(line)
 
 

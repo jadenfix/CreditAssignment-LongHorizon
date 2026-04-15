@@ -13,7 +13,7 @@ import jax.numpy as jnp
 
 
 def energy_contrastive_loss(
-    e_bad: jax.Array,   # [B] scalar energy assigned to (R_bad, e_f)
+    e_bad: jax.Array,  # [B] scalar energy assigned to (R_bad, e_f)
     e_good: jax.Array,  # [B] scalar energy assigned to (R_good, e_f)
     *,
     margin: float = 1.0,

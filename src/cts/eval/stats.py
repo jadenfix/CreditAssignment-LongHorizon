@@ -53,7 +53,6 @@ def wilcoxon_signed_rank(a: Sequence[float], b: Sequence[float]) -> dict[str, fl
         i = j + 1
     signed = np.where(d > 0, ranks, -ranks)
     W = float(signed.sum())
-    mean_W = 0.0
     var_W = n * (n + 1) * (2 * n + 1) / 6.0
     z = W / (var_W**0.5) if var_W > 0 else 0.0
     # two-sided p via standard normal
@@ -84,7 +83,6 @@ def cohens_kappa(rater_a: Sequence[int], rater_b: Sequence[int]) -> float:
     if a.size == 0:
         return 0.0
     labels = np.unique(np.concatenate([a, b]))
-    n = a.size
     po = float((a == b).mean())
     pe = 0.0
     for lab in labels:

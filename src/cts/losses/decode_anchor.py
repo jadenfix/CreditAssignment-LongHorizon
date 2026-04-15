@@ -12,8 +12,8 @@ import jax.numpy as jnp
 
 
 def decode_anchor_loss(
-    logits: jax.Array,       # [B, T, V]  logits for teacher-forced targets
-    target_tokens: jax.Array, # [B, T]     next-token targets
+    logits: jax.Array,  # [B, T, V]  logits for teacher-forced targets
+    target_tokens: jax.Array,  # [B, T]     next-token targets
     mask: jax.Array | None = None,  # [B, T] 1 where we supervise y1 tokens, 0 on prompt
 ) -> jax.Array:
     """Mean token-level NLL over the masked positions (typically y1 tokens)."""

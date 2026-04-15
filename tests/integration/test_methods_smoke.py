@@ -56,7 +56,9 @@ def _mk_grpo_batch(model: NanoLM, B: int = 2, G: int = 2, T_in: int = 8, T_out: 
     mask = jnp.ones((B, G, T_out))
     old_lp = jax.random.normal(jax.random.PRNGKey(2), (B, G, T_out)) * 0.01
     rewards = jax.random.uniform(jax.random.PRNGKey(3), (B, G))
-    return GRPOBatch(prompt_ids=prompt, completion_ids=comp, mask=mask, logprobs_old=old_lp, rewards=rewards)
+    return GRPOBatch(
+        prompt_ids=prompt, completion_ids=comp, mask=mask, logprobs_old=old_lp, rewards=rewards
+    )
 
 
 def test_b2_grpo_outcome(model_and_tok):
