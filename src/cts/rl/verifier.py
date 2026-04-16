@@ -70,7 +70,8 @@ class CodeVerifier:
 
     def _run(self, code: str) -> bool:
         def limit_resources() -> None:  # pragma: no cover — subprocess init
-            resource.setrlimit(resource.RLIMIT_CPU, (int(self.timeout_sec) + 1,) * 2)
+            cpu_sec = int(self.timeout_sec) + 1
+            resource.setrlimit(resource.RLIMIT_CPU, (cpu_sec, cpu_sec))
             bytes_ = self.memory_mb * 1024 * 1024
             with contextlib.suppress(Exception):
                 resource.setrlimit(resource.RLIMIT_AS, (bytes_, bytes_))
