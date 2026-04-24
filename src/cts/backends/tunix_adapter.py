@@ -51,6 +51,11 @@ def _resolve_trainer(method: str) -> Any:
 class TunixAdapter:
     name = "tunix"
 
+    # Required methods on the underlying Tunix trainer. Tunix's module layout
+    # has shifted across releases; asserting these at construction time turns
+    # a mid-matrix AttributeError into a fast ImportError with a fixable message.
+    _REQUIRED_TRAINER_METHODS: tuple[str, ...] = ("step",)
+
     def __init__(self, cfg: dict[str, Any]):
         try:
             import tunix  # noqa: F401
@@ -66,6 +71,16 @@ class TunixAdapter:
         # We build the model via Tunix's model registry; the user pins the model
         # name in configs/backend/tunix.yaml.
         self._trainer = TrainerCls(**self._trainer_kwargs(cfg))
+
+        tunix_version = getattr(tunix, "__version__", "unknown")
+        missing = [m for m in self._REQUIRED_TRAINER_METHODS if not hasattr(self._trainer, m)]
+        if missing:
+            raise ImportError(
+                f"Installed tunix ({tunix_version}) trainer "
+                f"{type(self._trainer).__name__} is missing required method(s) "
+                f"{missing!r}. Pin tunix via .[scale] to a revision that exposes them, "
+                "or update _TRAINER_TABLE / deploy/Dockerfile.tpu."
+            )
 
     @staticmethod
     def _trainer_kwargs(cfg: Any) -> dict[str, Any]:

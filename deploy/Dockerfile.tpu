@@ -17,4 +17,13 @@ COPY deploy ./deploy
 # Use --inexact-resolve so JAX from the base image isn't replaced.
 RUN uv pip install --system -e ".[ot,scale,gcp,teacher]"
 
+# TODO(paper-matrix): before the paper run, pin a specific Tunix SHA known to
+# expose trainer.step(batch) and the per-layer extract_hidden() hook that B5
+# depends on. The Phase 3 CPU-image probe
+#   docker run --rm cts:cpu python -c "import tunix; print(tunix.__version__); \
+#       print([n for n in dir(tunix.rl.grpo.GRPOTrainer) if not n.startswith('_')])"
+# identifies a working SHA; then replace the line above with e.g.
+#   RUN uv pip install --system 'tunix @ git+https://github.com/google/tunix@<SHA>'
+# so images are reproducible across the matrix.
+
 CMD ["python", "-m", "cts.train.main"]

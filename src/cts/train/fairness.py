@@ -5,7 +5,10 @@ attack surface for any CTS-vs-baseline claim.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
@@ -19,10 +22,72 @@ class FairnessFingerprint:
     verifier_id: str | None
     revision_budget: int
     test_compute_budget: int | None
+    # Hash of the replay shards backing this cell. None if the task path is
+    # missing on disk (smoke runs) — otherwise a dict keyed by relative path.
+    # Without this, swapping a test.jsonl mid-matrix is invisible to the gate.
+    replay_shard_hashes: tuple[tuple[str, str], ...] | None = None
+
+
+def _hash_replay_path(replay_path: str | Path) -> tuple[tuple[str, str], ...] | None:
+    """Return a stable tuple of (relpath, sha256-hex) for the shard(s) at ``replay_path``.
+
+    Priority: if a sibling ``MANIFEST.json`` exists (produced by the teacher
+    upload step), use it verbatim so the fingerprint matches what was uploaded
+    to GCS. Otherwise hash the files on disk. Returns ``None`` if the path is
+    absent (smoke / missing-data case — treat as a non-gate rather than an
+    error so matrix pre-flight works on controller nodes without data).
+    """
+    p = Path(replay_path)
+    if not p.exists():
+        return None
+
+    # Prefer a manifest if present — matches the uploaded GCS artifact.
+    manifest_candidates: list[Path] = []
+    if p.is_dir():
+        manifest_candidates.append(p / "MANIFEST.json")
+        manifest_candidates.append(p.parent / "MANIFEST.json")
+    else:
+        manifest_candidates.append(p.parent / "MANIFEST.json")
+    for mp in manifest_candidates:
+        if mp.exists():
+            try:
+                data = json.loads(mp.read_text())
+                if isinstance(data, dict) and data:
+                    return tuple(sorted((k, str(v)) for k, v in data.items()))
+            except (OSError, json.JSONDecodeError):
+                pass
+
+    # Fall back to live file hashing.
+    files: list[Path] = []
+    if p.is_dir():
+        files = sorted(p.rglob("*.jsonl"))
+    elif p.is_file():
+        files = [p]
+    if not files:
+        return None
+    root = p if p.is_dir() else p.parent
+    out: list[tuple[str, str]] = []
+    for f in files:
+        h = hashlib.sha256()
+        with f.open("rb") as fh:
+            for chunk in iter(lambda: fh.read(1 << 16), b""):
+                h.update(chunk)
+        try:
+            rel = str(f.relative_to(root))
+        except ValueError:
+            rel = f.name
+        out.append((rel, h.hexdigest()))
+    return tuple(sorted(out))
 
 
 def fingerprint_from_cfg(cfg: Any) -> FairnessFingerprint:
     f = cfg.fairness
+    replay_path = None
+    try:
+        replay_path = cfg.task.replay_path
+    except Exception:
+        pass
+    replay_hashes = _hash_replay_path(replay_path) if replay_path else None
     return FairnessFingerprint(
         base_ckpt_hash=f.get("base_ckpt_hash"),
         total_train_tokens=f.get("total_train_tokens"),
@@ -32,6 +97,7 @@ def fingerprint_from_cfg(cfg: Any) -> FairnessFingerprint:
         verifier_id=f.get("verifier_id"),
         revision_budget=int(f.get("revision_budget", 1)),
         test_compute_budget=f.get("test_compute_budget"),
+        replay_shard_hashes=replay_hashes,
     )
 
 

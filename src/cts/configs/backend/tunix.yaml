@@ -2,5 +2,10 @@ backend:
   kind: tunix
   tunix:
     trainer: grpo        # sft | dpo | ppo | grpo
-    model_name: Qwen2.5-1.5B   # placeholder; wired in M8
-    mesh_shape: [1, 1]
+    # Base policy. Pin a HuggingFace revision SHA via `revision:` before launching
+    # the paper matrix so `fairness.base_ckpt_hash` is stable across cells.
+    model_name: Qwen/Qwen2.5-1.5B
+    revision: null       # e.g. "bb46c15ee4bb56c5b63245ef50fd7637234d6f75"
+    # v5p-8: data-parallel across all 8 chips. Bump to [1,16] on v5p-16 or
+    # [2,4] if tensor parallelism becomes necessary (>=7B models).
+    mesh_shape: [1, 8]
