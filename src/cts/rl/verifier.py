@@ -60,7 +60,7 @@ class CodeVerifier:
     """Runs candidate Python code against a bank of unit tests per task.
 
     ``tests[task_id]`` is a list of assertion strings that will be appended
-    after the candidate definition. The test passes iff all assertions run
+    after the candidate definition. The test passes if all assertions run
     without raising.
     """
 
