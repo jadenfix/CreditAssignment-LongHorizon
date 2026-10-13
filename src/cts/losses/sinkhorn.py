@@ -12,6 +12,8 @@ tests run without OTT-JAX installed.
 
 from __future__ import annotations
 
+from typing import Any
+
 import jax
 import jax.numpy as jnp
 
@@ -29,6 +31,18 @@ def _time_augment(R: jax.Array, alpha: float) -> jax.Array:
 def _pairwise_sqdist(a: jax.Array, b: jax.Array) -> jax.Array:
     # a: [M, D], b: [N, D]  ->  [M, N]
     return jnp.sum(a * a, axis=-1, keepdims=True) + jnp.sum(b * b, axis=-1) - 2.0 * a @ b.T
+
+
+def _ott_divergence_value(result: Any) -> jax.Array:
+    """Normalize OTT's version-dependent Sinkhorn divergence return value.
+
+    OTT-JAX 0.6 returns ``(divergence, auxiliary_outputs)`` while older
+    releases exposed an object with a ``divergence`` attribute.
+    """
+
+    if isinstance(result, tuple):
+        return result[0]
+    return result.divergence
 
 
 def _fallback_sinkhorn(
@@ -96,10 +110,10 @@ def sinkhorn_divergence_loss(
                 kwargs: dict = {"max_iterations": num_iters}
                 if unbalanced_tau is not None:
                     kwargs.update({"tau_a": unbalanced_tau, "tau_b": unbalanced_tau})
-                out = sinkhorn_divergence(
+                result = sinkhorn_divergence(
                     pointcloud.PointCloud, x=a, y=b, epsilon=epsilon, sinkhorn_kwargs=kwargs
                 )
-                return out.divergence
+                return _ott_divergence_value(result)
 
             return jax.vmap(per_batch)(R_a_t, R_b_t).mean()
         except Exception:  # pragma: no cover - fallback path

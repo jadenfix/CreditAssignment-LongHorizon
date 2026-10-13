@@ -5,7 +5,7 @@ import pytest
 from cts.losses.alignment import AlignmentCfg, alignment_loss
 from cts.losses.decode_anchor import decode_anchor_loss
 from cts.losses.energy_loss import energy_contrastive_loss
-from cts.losses.sinkhorn import sinkhorn_divergence_loss
+from cts.losses.sinkhorn import _ott_divergence_value, sinkhorn_divergence_loss
 from cts.losses.soft_dtw import soft_dtw_loss
 
 
@@ -30,6 +30,14 @@ def test_sinkhorn_fallback_symmetry_nonneg():
     assert jnp.abs(v_ab - v_ba) < 1e-2
     assert v_ab >= -1e-3
     assert jnp.abs(v_aa) < 1e-2
+
+
+def test_ott_divergence_return_compatibility():
+    class LegacyResult:
+        divergence = jnp.asarray(1.5)
+
+    assert _ott_divergence_value((jnp.asarray(2.5), object())) == 2.5
+    assert _ott_divergence_value(LegacyResult()) == 1.5
 
 
 def test_soft_dtw_monotone_in_gamma():

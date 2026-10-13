@@ -24,7 +24,6 @@ jobs:
         run: uv run ruff format --check src tests scripts
       - name: Pyright
         run: uv run pyright
-        continue-on-error: true
       - name: Test
         run: uv run pytest -q -m "not slow"
       - name: Verify published fixture demo
