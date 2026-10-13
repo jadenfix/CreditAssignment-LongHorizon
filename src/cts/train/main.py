@@ -9,6 +9,8 @@ Example::
 from __future__ import annotations
 
 import argparse
+import json
+from dataclasses import asdict
 from pathlib import Path
 
 from omegaconf import OmegaConf
@@ -44,6 +46,7 @@ def _load_cfg(overrides: list[str]):
         cfg = OmegaConf.merge(cfg, OmegaConf.from_dotlist(leaf_overrides))
     # Stamp the fairness prompt-template hash so sweeps can check consistency.
     cfg.fairness.prompt_template_hash = prompt_template_hash()
+    cfg.fairness.total_opt_steps = cfg.trainer.max_steps
     return cfg
 
 
@@ -63,17 +66,10 @@ def main() -> None:
     print(f"[cts] fairness fingerprint: {fp}")
 
     # Backend
-    if cfg.backend.kind == "tunix":
-        from ..backends.tunix_adapter import TunixAdapter
-
-        adapter = TunixAdapter(cfg)
-        print(f"[cts] tunix trainer ready: {type(adapter.trainer_handle()).__name__}")
-        # Real training delegated to the Tunix trainer; one step() so smoke
-        # surfaces wiring problems immediately.
-        # (The replay shard load + batch encode below is shared with local.)
-    elif cfg.backend.kind != "local_nano":
+    if cfg.backend.kind != "local_nano":
         raise NotImplementedError(
-            f"Backend {cfg.backend.kind!r} not wired yet; see cts.backends.{cfg.backend.kind}_adapter."
+            f"CLI training is implemented only for local_nano, not {cfg.backend.kind!r}. "
+            "Use a configured scale adapter explicitly; no local run is a scale experiment."
         )
     nano_cfg = NanoLMConfig(
         vocab_size=cfg.backend.nano.vocab_size,
@@ -94,21 +90,53 @@ def main() -> None:
     method = get_method(cfg.method.name)
     batch = encode_batch(quads[: cfg.trainer.batch_size], tokenizer)
 
-    # Smoke: one forward call per method just to prove wiring. Full training
-    # loops land in M8 once Tunix is wired; this keeps the entry point
-    # importable and exercises the method-dispatch path for every config.
-    if cfg.method.name in {"sft_revision"}:
-        loss, metrics = method.step(model, batch)
+    import jax
+    import jax.numpy as jnp
+    from flax import nnx
+
+    from ..backends.local_api import DecodeCfg
+    from .loop import LoopCfg, train_local
+
+    if cfg.method.name == "sft_revision":
+        loss_batch = batch
     elif cfg.method.name == "dpo":
-        pref_batch = method.prepare_batch(quads[: cfg.trainer.batch_size], tokenizer)
-        loss, metrics = method.step(model, pref_batch)
+        loss_batch = method.prepare_batch(quads[: cfg.trainer.batch_size], tokenizer)
     else:
-        print(
-            f"[cts] Method {cfg.method.name!r} requires RL rollouts (see "
-            "cts.rl.rollout / TunixAdapter). Entry point stub — run its unit test instead."
+        raise NotImplementedError(
+            f"CLI optimizer training for {cfg.method.name!r} needs a task-specific rollout/reward "
+            "builder. Run the replay/loss integration tests; a dispatch stub is not training."
         )
-        return
-    print(f"[cts] step0 loss={float(loss):.4f}")
+    loop_cfg = LoopCfg(**{key: cfg.trainer[key] for key in LoopCfg.__dataclass_fields__})
+    if loop_cfg.max_steps < 1:
+        raise ValueError("trainer.max_steps must be positive")
+    before = jax.tree.map(lambda value: value.copy(), nnx.state(model, nnx.Param))
+    train_local(
+        model, lambda model_, step: method.step(model_, loss_batch), loop_cfg, log_dir=cfg.out_dir
+    )
+    after = nnx.state(model, nnx.Param)
+    delta = sum(
+        float(jnp.sum(jnp.abs(a - b)))
+        for a, b in zip(jax.tree.leaves(before), jax.tree.leaves(after), strict=True)
+    )
+    loss, metrics = method.step(model, loss_batch)
+    if not bool(jnp.isfinite(loss)) or not bool(jnp.isfinite(delta)):
+        raise RuntimeError("Local training produced non-finite loss or parameter change")
+    generated = model.generate(batch.input_ids[:, :8], DecodeCfg(max_new_tokens=2, greedy=True))
+    receipt = {
+        "method": cfg.method.name,
+        "backend": cfg.backend.kind,
+        "steps": loop_cfg.max_steps,
+        "parameter_delta_l1": delta,
+        "loss": float(loss),
+        "fairness_fingerprint": asdict(fp),
+        "replay_path": str(cfg.task.replay_path),
+        "generated_token_shape": list(generated.tokens.shape),
+        "scope": "tiny local randomly initialized model; no policy-quality claim",
+    }
+    output = Path(cfg.out_dir)
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "training-receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
+    print(f"[cts] trained steps={loop_cfg.max_steps} loss={float(loss):.4f} delta={delta:.6g}")
     print(f"[cts] metrics={ {k: float(v) for k, v in metrics.items()} }")
 
     if args.gcs_bucket:
