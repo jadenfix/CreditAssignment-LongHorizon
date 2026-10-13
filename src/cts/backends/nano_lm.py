@@ -69,7 +69,9 @@ class NanoLM(nnx.Module):
         rngs = nnx.Rngs(seed)
         self.tok_emb = nnx.Embed(cfg.vocab_size, cfg.hidden_size, rngs=rngs)
         self.pos_emb = nnx.Embed(cfg.max_seq_len, cfg.hidden_size, rngs=rngs)
-        self.blocks = nnx.List([_Block(cfg, rngs=rngs) for _ in range(cfg.num_layers)])
+        self.blocks = getattr(nnx, "List", list)(
+            [_Block(cfg, rngs=rngs) for _ in range(cfg.num_layers)]
+        )
         self.ln_f = nnx.LayerNorm(cfg.hidden_size, rngs=rngs)
         self.lm_head = nnx.Linear(cfg.hidden_size, cfg.vocab_size, rngs=rngs)
 

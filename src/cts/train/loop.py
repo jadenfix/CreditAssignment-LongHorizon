@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import jax
 import optax
@@ -33,7 +33,7 @@ def _make_optimizer(cfg: LoopCfg) -> optax.GradientTransformation:
     schedule = optax.warmup_cosine_decay_schedule(
         init_value=0.0,
         peak_value=cfg.lr,
-        warmup_steps=cfg.warmup_steps,
+        warmup_steps=min(cfg.warmup_steps, max(0, cfg.max_steps - 1)),
         decay_steps=max(cfg.max_steps, 1),
         end_value=cfg.lr * 0.1,
     )
@@ -70,7 +70,7 @@ def train_local(
     # Modern nnx grad pattern: split once to get an immutable graphdef per
     # module and mutate only the `params` pytree inside the traced function.
     # Calling nnx.update inside jax.grad trips Flax's trace-context guard.
-    graphdefs_and_rest = [nnx.split(m, nnx.Param, ...) for m in modules]
+    graphdefs_and_rest: list[Any] = [nnx.split(m, nnx.Param, ...) for m in modules]
     graphdefs = tuple(x[0] for x in graphdefs_and_rest)
     rests = tuple(x[2] for x in graphdefs_and_rest)
 
@@ -86,7 +86,7 @@ def train_local(
     else:
         opt = base_opt
 
-    params = tuple(x[1] for x in graphdefs_and_rest)
+    params: Any = tuple(x[1] for x in graphdefs_and_rest)
     opt_state = opt.init(params)
     logger = JSONLLogger(Path(log_dir) / "train.jsonl")
 
@@ -100,7 +100,7 @@ def train_local(
 
         (loss, metrics), grads = jax.value_and_grad(loss_and_metrics, has_aux=True)(params)
         updates, opt_state = opt.update(grads, opt_state, params)
-        params = optax.apply_updates(params, updates)
+        params = cast(Any, optax.apply_updates(params, updates))
 
         if step % cfg.log_every == 0:
             logger.log(step, {"loss": float(loss), **{k: float(v) for k, v in metrics.items()}})

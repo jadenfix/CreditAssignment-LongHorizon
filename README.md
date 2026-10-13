@@ -132,3 +132,13 @@ Ablations (single config flips):
 ## What this paper does **not** claim
 
 CTS replaces language-model losses. CTS is a new universal alignment paradigm. CTS beats process supervision everywhere. (See plan §16.)
+
+## Verified local optimizer lane
+
+```sh
+PYTHONPATH=src JAX_PLATFORMS=cpu python -m cts.train.main \
+  method=sft task=fixtures_math backend=local_nano \
+  trainer.max_steps=2 trainer.warmup_steps=0 trainer.batch_size=2
+```
+
+The SFT and DPO CLI paths now perform the requested Optax updates and emit `train.jsonl` plus `training-receipt.json` (steps, parameter change, finite loss, fairness settings, and decode shape). The receipt labels the tiny randomly initialized model explicitly. The full test suite also exercises joint CTS backbone/projection/critic optimization. CLI RL rollout/reward construction and scale execution remain unsupported and now fail explicitly instead of returning success from a stub. These local runs do not establish improved reasoning quality or reproduce paper-scale results.

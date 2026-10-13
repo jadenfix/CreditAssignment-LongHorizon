@@ -23,7 +23,7 @@ class Projection(nnx.Module):
     def __init__(self, cfg: ProjectionCfg, *, rngs: nnx.Rngs):
         self.cfg = cfg
         dims = [cfg.hidden_size] + [cfg.hidden_size] * (cfg.num_layers - 1) + [cfg.out_dim]
-        self.layers = nnx.List(
+        self.layers = getattr(nnx, "List", list)(
             [nnx.Linear(dims[i], dims[i + 1], rngs=rngs) for i in range(len(dims) - 1)]
         )
 
