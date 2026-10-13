@@ -6,6 +6,8 @@ This is a visualization of an actual two-step CPU run from source tree `5b6864d8
 
 The run used archived math fixture data, a tiny randomly initialized nano-LM, and no downloads or provider calls. The replay `y0`/`y1` pair guarantees a non-degenerate local verifier group while the third candidate proves fresh sampling executes. This demo makes no policy-quality, benchmark, scale, or paper-result claim.
 
+These files are curated, source-pinned documentation assets under the narrow `AGENTS.md` demo exception. Runtime experiment outputs remain git-ignored under `artifacts/`.
+
 ```sh
 PYTHONPATH=src JAX_PLATFORMS=cpu XLA_PYTHON_CLIENT_PREALLOCATE=false \
 python -m cts.train.main \
