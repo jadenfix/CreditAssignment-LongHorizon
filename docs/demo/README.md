@@ -2,7 +2,7 @@
 
 [![Ten-second CTS fixture execution receipt](cts-fixture.gif)](cts-fixture.mp4)
 
-This is a visualization of an actual two-step CPU run from source tree `5b6864d819a8625ca86e40736929b740c100f120`, published as commit `a0f850b24285164e5a9c09b19b340c5c9e7caaff`. It shows the recorded comparison-group shapes, verifier rewards, optimizer logs, finite final loss, parameter delta, generated-token shape, and fairness fingerprint from `training-receipt.json` and `train.jsonl`.
+This is a visualization of an actual two-step CPU run from source tree `49d56d14413d3f6d5c539ef997a4766556c8ba3a`, published as commit `fddf9acfc3f3a16e338a3dd5b7e61c34cb1a34e6`. It shows the recorded comparison-group shapes, verifier rewards, optimizer logs, finite final loss, parameter delta, generated-token shape, and fairness fingerprint from `training-receipt.json` and `train.jsonl`.
 
 The run used archived math fixture data, a tiny randomly initialized nano-LM, and no downloads or provider calls. The replay `y0`/`y1` pair guarantees a non-degenerate local verifier group while the third candidate proves fresh sampling executes. This demo makes no policy-quality, benchmark, scale, or paper-result claim.
 
