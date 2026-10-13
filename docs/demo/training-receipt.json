@@ -1,0 +1,42 @@
+{
+  "method": "cts",
+  "backend": "local_nano",
+  "steps": 2,
+  "parameter_delta_l1": 14.083788089745212,
+  "loss": 5.691038608551025,
+  "fairness_fingerprint": {
+    "base_ckpt_hash": null,
+    "total_train_tokens": null,
+    "total_opt_steps": 2,
+    "prompt_template_hash": "f6edf26d62fd",
+    "decode_temperature": 1.0,
+    "verifier_id": null,
+    "revision_budget": 1,
+    "test_compute_budget": null
+  },
+  "replay_path": "src/cts/data/fixtures/gsm8k_tiny.jsonl",
+  "replay_hash": "c53e0b2f08d3bb35",
+  "generated_token_shape": [
+    2,
+    2
+  ],
+  "scope": "tiny random fixture on CPU; no policy-quality or scale claim",
+  "fixture_rollout": {
+    "reward_id": "fixture_math_final_number_v1",
+    "group_size": 3,
+    "sampled_rollouts_per_prompt": 1,
+    "sampled_rollout_shape": [
+      2,
+      1,
+      8
+    ],
+    "candidate_group_shape": [
+      2,
+      3,
+      8
+    ],
+    "reward_min": 0.0,
+    "reward_max": 1.0,
+    "reward_mean": 0.3333333432674408
+  }
+}

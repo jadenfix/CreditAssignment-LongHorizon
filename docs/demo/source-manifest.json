@@ -1,0 +1,28 @@
+{
+  "captured_source_commit": "a0f850b24285164e5a9c09b19b340c5c9e7caaff",
+  "execution_local_commit": "4d276aa4aeb77ec2a7d1b0593e038bb2c84d933a",
+  "captured_source_tree": "5b6864d819a8625ca86e40736929b740c100f120",
+  "scope": "tiny random fixture on CPU; no policy-quality or scale claim",
+  "source_blobs": {
+    "src/cts/backends/local_api.py": "492eacf252a82a66b6b9434526cc204a2b165c85",
+    "src/cts/backends/nano_lm.py": "4ac62dba087fcdd8b889966709eb4abb1414f155",
+    "src/cts/configs/base.yaml": "c781268f007818552c8405d899f90facc04e05f8",
+    "src/cts/configs/method/cts.yaml": "b2b1078de75db05dc4091905eb3e40e5562349be",
+    "src/cts/configs/task/fixtures_math.yaml": "cfb0810ec5b47d574213e0372c095c8f70beb2f9",
+    "src/cts/data/fixtures/gsm8k_tiny.jsonl": "6004682ec253e91c993ccba09f9829e1489275f2",
+    "src/cts/methods/b2_grpo_outcome.py": "7669238aae7f31ef248882be5bfc4df37239ee21",
+    "src/cts/methods/b5_cts.py": "408bb6f75c286f47e480e38edaa574bbfbee31a4",
+    "src/cts/rl/rollout.py": "82558469f62f088bc60ef04463030e5ca3b4c904",
+    "src/cts/rl/verifier.py": "7cca2c5627ab1db4b05ebe813993a1361ce9d31a",
+    "src/cts/train/fixture_rl.py": "0d46e9376bcb32db8c50b4a1ed678b47db5e3327",
+    "src/cts/train/loop.py": "184bb9816b7446a15c989ad1da349d0318e27193",
+    "src/cts/train/main.py": "686065dc66e95900ea942c77413c7c864f6dc52c"
+  },
+  "artifact_sha256": {
+    "docs/demo/console.txt": "b47dd7c054fa95c02fefad3c35b0a138b25cad2349c16bb7932f3c1773306fb5",
+    "docs/demo/cts-fixture.gif": "e5c540b12b32914c49b4b3bdc2487c27b837eac5d8230e64a5b292d3af1fe192",
+    "docs/demo/cts-fixture.mp4": "ac7c3aa11505de339b7a17a35902e418354274bfb69af38df3f396678b8db82d",
+    "docs/demo/train.jsonl": "90544852432c7149c503b7c2d911b3bc037edf3893167cb1b4c5faa9cdee2297",
+    "docs/demo/training-receipt.json": "299cb7adfaa1e6703f446a8e7997182a1729b3dbc0a3772b280e418410fbd80d"
+  }
+}

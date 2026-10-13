@@ -144,7 +144,7 @@ def render_frame(receipt: dict, logs: list[dict], frame: int, total: int) -> Ima
     elif phase == 2:
         _text(draw, (64, 112), "The optimizer moved real parameters.", 40, COLORS["ink"], True)
         final_log = logs[-1]
-        _metric(draw, 64, 210, "finite loss", f"{receipt['loss']:.4f}", COLORS["green"])
+        _metric(draw, 64, 210, "post-update loss", f"{receipt['loss']:.4f}", COLORS["green"])
         _metric(
             draw, 334, 210, "parameter Δ L1", f"{receipt['parameter_delta_l1']:.4f}", COLORS["cyan"]
         )
@@ -165,7 +165,14 @@ def render_frame(receipt: dict, logs: list[dict], frame: int, total: int) -> Ima
             _text(draw, (208, y), f"loss {item['loss']:.4f}", 18)
             _text(draw, (405, y), f"GRPO {item['grpo_loss']:.4f}", 18, COLORS["muted"])
             _text(draw, (625, y), f"decode {item['decode_anchor']:.4f}", 18, COLORS["muted"])
-        _text(draw, (920, 500), f"final total  {final_log['total']:.4f}", 21, COLORS["green"], True)
+        _text(
+            draw,
+            (920, 500),
+            f"step-1 total  {final_log['total']:.4f}",
+            21,
+            COLORS["green"],
+            True,
+        )
     elif phase == 3:
         _text(draw, (64, 112), "Fairness settings travel with the result.", 40, COLORS["ink"], True)
         fp = receipt["fairness_fingerprint"]

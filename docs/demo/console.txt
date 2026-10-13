@@ -1,0 +1,4 @@
+[cts] method=cts backend=local_nano task=fixtures_math
+[cts] fairness fingerprint: FairnessFingerprint(base_ckpt_hash=None, total_train_tokens=None, total_opt_steps=2, prompt_template_hash='f6edf26d62fd', decode_temperature=1.0, verifier_id=None, revision_budget=1, test_compute_budget=None)
+[cts] trained steps=2 loss=5.6910 delta=14.0838
+[cts] metrics={'total': 5.691038608551025, 'grpo_loss': -0.0486871562898159, 'approx_kl': 0.020017830654978752, 'decode_anchor': 5.639525890350342, 'alignment': 8.985807653516531e-10, 'energy_loss': 1.0, 'reward_mean': 0.3333333432674408}

@@ -153,3 +153,7 @@ PYTHONPATH=src JAX_PLATFORMS=cpu python -m cts.train.main \
 ```
 
 This is an optimizer/integration fixture, not a benchmark. The model is tiny and randomly initialized; replay candidates deliberately guarantee a non-degenerate reward group, and fresh samples prove the rollout path executes. No local receipt establishes reasoning quality, scale behavior, or paper results.
+
+[![CTS fixture workflow: replay to rollout to parameter update](docs/demo/cts-fixture.gif)](docs/demo/cts-fixture.mp4)
+
+The checked-in [demo receipt](docs/demo/README.md) pins the exact source commit, input blobs, command, logs, artifact digests, and verification procedure.
