@@ -54,7 +54,19 @@ def _probe(path: Path) -> dict:
 
 def main() -> None:
     manifest = json.loads(MANIFEST.read_text())
-    for path, expected in manifest["source_blobs"].items():
+    overrides = manifest.get("current_source_overrides", {})
+    for path, captured in manifest["source_blobs"].items():
+        # The published run remains pinned to its historical execution source.
+        historical = subprocess.run(
+            ["git", "rev-parse", f"{manifest['captured_source_commit']}:{path}"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        if historical != captured:
+            raise SystemExit(f"captured source mismatch: {path}")
+        expected = overrides.get(path, captured)
         actual = _git_blob(path)
         if actual != expected:
             raise SystemExit(f"source drift: {path}: expected {expected}, got {actual}")
@@ -98,7 +110,23 @@ def main() -> None:
     assert gif_stream["nb_frames"] == mp4_stream["nb_frames"] == "60"
     assert math.isclose(float(gif["format"]["duration"]), 10.0)
     assert math.isclose(float(mp4["format"]["duration"]), 10.0)
-    print("verified: source blobs, receipts, 60-frame GIF, and 60-frame MP4")
+    for name in ("cts-fixture.gif", "cts-fixture.mp4"):
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-xerror",
+                "-i",
+                str(ROOT / "docs/demo" / name),
+                "-f",
+                "null",
+                "-",
+            ],
+            check=True,
+            capture_output=True,
+        )
+    print("verified: source blobs, receipts, full 60-frame GIF and MP4 decode")
 
 
 if __name__ == "__main__":

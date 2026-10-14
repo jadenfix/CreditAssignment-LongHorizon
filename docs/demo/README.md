@@ -19,6 +19,14 @@ python -m cts.train.main \
   out_dir=artifacts/demo/cts-fixture
 ```
 
+The published media remains a **historical execution receipt** from the source above.
+The current source fixes the optional OTT solver contract and error handling;
+this recorded run explicitly used `use_ott=false` and does not verify OTT.
+The manifest records the changed current source blob separately, while the
+verifier checks both the historical execution blobs and current source.
+Actual installed-OTT balanced/unbalanced values, gradients, and failure
+propagation are verified by `tests/unit/test_losses.py`.
+
 Re-render and verify:
 
 ```sh

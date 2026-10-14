@@ -26,5 +26,8 @@
     "docs/demo/cts-fixture.mp4": "ac7c3aa11505de339b7a17a35902e418354274bfb69af38df3f396678b8db82d",
     "docs/demo/train.jsonl": "f2fcdb8680726252b7b1f45b4c16d66010f00b7f5e9fddf1356d7c16bafda448",
     "docs/demo/training-receipt.json": "299cb7adfaa1e6703f446a8e7997182a1729b3dbc0a3772b280e418410fbd80d"
+  },
+  "current_source_overrides": {
+    "src/cts/losses/sinkhorn.py": "87fc282a4dbd9d411529191c5cacc9f7a3e04ef3"
   }
 }

@@ -92,8 +92,8 @@ def sinkhorn_divergence_loss(
     time_alpha
         Weight of the appended time coordinate. 0 reduces to plain OT.
     unbalanced_tau
-        If not None and OTT-JAX is available, use unbalanced Sinkhorn with this
-        tau. Preferred when the revised trajectory legitimately deletes steps.
+        Use unbalanced Sinkhorn with this tau. Requires OTT-JAX; the fallback
+        cannot represent unbalanced transport and raises instead of ignoring it.
     use_ott
         If True, prefer OTT-JAX; falls back to the in-file implementation on
         ImportError so tests run without the extra.
@@ -101,23 +101,30 @@ def sinkhorn_divergence_loss(
     R_a_t = _time_augment(R_a, time_alpha)
     R_b_t = _time_augment(R_b, time_alpha)
 
+    if unbalanced_tau is not None and not use_ott:
+        raise ValueError("Unbalanced transport requires OTT-JAX; the fallback is balanced only")
+
     if use_ott:
         try:
             from ott.geometry import pointcloud
             from ott.tools.sinkhorn_divergence import sinkhorn_divergence
+        except ImportError:
+            if unbalanced_tau is not None:
+                raise ImportError(
+                    "Unbalanced transport requires the optional ott-jax dependency"
+                ) from None
+        else:
 
             def per_batch(a: jax.Array, b: jax.Array) -> jax.Array:
                 kwargs: dict = {"max_iterations": num_iters}
                 if unbalanced_tau is not None:
                     kwargs.update({"tau_a": unbalanced_tau, "tau_b": unbalanced_tau})
                 result = sinkhorn_divergence(
-                    pointcloud.PointCloud, x=a, y=b, epsilon=epsilon, sinkhorn_kwargs=kwargs
+                    pointcloud.PointCloud, x=a, y=b, epsilon=epsilon, solve_kwargs=kwargs
                 )
                 return _ott_divergence_value(result)
 
             return jax.vmap(per_batch)(R_a_t, R_b_t).mean()
-        except Exception:  # pragma: no cover - fallback path
-            pass
 
     return jax.vmap(lambda a, b: _fallback_sinkhorn(a, b, epsilon=epsilon, num_iters=num_iters))(
         R_a_t, R_b_t
