@@ -46,7 +46,7 @@ def _delta_means(cells: list[dict]) -> list[float]:
 
 def _format_table(rows: list[dict]) -> str:
     lines = [
-        "| Method | Task | Δ_critique mean ± std (seeds) | 95% paired-bootstrap CI (seeds) | Wilcoxon p vs B3 | Holm reject |",
+        "| Method | Task | Δ_critique mean ± std (seeds) | 95% paired-bootstrap CI (seeds) | Wilcoxon p vs comparator | Holm reject |",
         "|---|---|---|---|---|---|",
     ]
     for r in rows:

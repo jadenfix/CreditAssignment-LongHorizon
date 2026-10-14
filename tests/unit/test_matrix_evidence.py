@@ -33,3 +33,29 @@ def test_paired_comparison_rejects_different_seed_ids(tmp_path):
     )
     assert result.returncode != 0
     assert "identical seed IDs" in result.stderr
+
+
+def test_dry_run_fingerprint_matches_requested_step_budget(tmp_path):
+    subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_paper_matrix.py",
+            "--tasks",
+            "smoke",
+            "--seeds",
+            "1",
+            "--methods",
+            "sft",
+            "--max-steps",
+            "3",
+            "--dry-run",
+            "--out",
+            str(tmp_path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    assert manifest["fairness_fingerprint"]["total_opt_steps"] == 3
+    assert manifest["trained_model_evaluated"] is False
