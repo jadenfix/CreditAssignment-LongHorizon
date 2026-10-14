@@ -141,4 +141,31 @@ PYTHONPATH=src JAX_PLATFORMS=cpu python -m cts.train.main \
   trainer.max_steps=2 trainer.warmup_steps=0 trainer.batch_size=2
 ```
 
-The SFT and DPO CLI paths now perform the requested Optax updates and emit `train.jsonl` plus `training-receipt.json` (steps, parameter change, finite loss, fairness settings, and decode shape). The receipt labels the tiny randomly initialized model explicitly. The full test suite also exercises joint CTS backbone/projection/critic optimization. CLI RL rollout/reward construction and scale execution remain unsupported and now fail explicitly instead of returning success from a stub. These local runs do not establish improved reasoning quality or reproduce paper-scale results.
+The SFT and DPO CLI paths perform the requested Optax updates and emit `train.jsonl` plus `training-receipt.json` (steps, parameter change, finite loss, fairness settings, and decode shape). The fixture-only CTS/GRPO path also runs locally: each comparison group contains the archived flawed attempt, archived corrected revision, and fresh nano-LM samples. The existing math final-answer verifier supplies transparent 0/1 rewards, while Critique-GRPO additionally reports token agreement with the archived revision as a fixture-only uptake proxy.
+
+```sh
+PYTHONPATH=src JAX_PLATFORMS=cpu python -m cts.train.main \
+  method=cts task=fixtures_math backend=local_nano \
+  trainer.max_steps=2 trainer.warmup_steps=0 trainer.batch_size=2 \
+  method_cfg.group_size=3 method_cfg.max_new_tokens=8 \
+  method_cfg.max_len=48 method_cfg.alignment.num_iters=5 \
+  method_cfg.alignment.use_ott=false out_dir=artifacts/demo/cts-fixture
+```
+
+This is an optimizer/integration fixture, not a benchmark. The model is tiny and randomly initialized; replay candidates deliberately guarantee a non-degenerate reward group, and fresh samples prove the rollout path executes. No local receipt establishes reasoning quality, scale behavior, or paper results.
+
+[![CTS fixture workflow: replay to rollout to parameter update](docs/demo/cts-fixture.gif)](docs/demo/cts-fixture.mp4)
+
+The checked-in [demo receipt](docs/demo/README.md) pins the exact source commit, input blobs, command, logs, artifact digests, and verification procedure.
+
+### Matrix evidence boundary
+
+`run_paper_matrix.py` currently trains each requested method, then evaluates archived
+replay pairs. It does not load the resulting model for evaluation. Fixture runs
+explicitly report human-audited archive labels; they are dispatch and optimizer
+checks, not a paper comparison. Other evaluation calls require a complete gold
+answer or test-bank map and fail when references are absent. Aggregation resamples
+each recorded seed summary once and reports seed counts; it does not manufacture
+instance counts by duplicating means. Large-model / TPU results and trained-model
+quality remain unverified until real checkpoint inference and independent test
+references are wired and executed.

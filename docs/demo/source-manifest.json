@@ -1,0 +1,33 @@
+{
+  "captured_source_commit": "fddf9acfc3f3a16e338a3dd5b7e61c34cb1a34e6",
+  "execution_local_commit": "5c7c08b5dc9bdd62fca5055f09eb26343665710a",
+  "captured_source_tree": "49d56d14413d3f6d5c539ef997a4766556c8ba3a",
+  "scope": "tiny random fixture on CPU; no policy-quality or scale claim",
+  "source_blobs": {
+    "src/cts/backends/local_api.py": "492eacf252a82a66b6b9434526cc204a2b165c85",
+    "src/cts/backends/nano_lm.py": "4ac62dba087fcdd8b889966709eb4abb1414f155",
+    "src/cts/configs/base.yaml": "c781268f007818552c8405d899f90facc04e05f8",
+    "src/cts/configs/method/cts.yaml": "b2b1078de75db05dc4091905eb3e40e5562349be",
+    "src/cts/configs/task/fixtures_math.yaml": "cfb0810ec5b47d574213e0372c095c8f70beb2f9",
+    "src/cts/data/fixtures/gsm8k_tiny.jsonl": "6004682ec253e91c993ccba09f9829e1489275f2",
+    "src/cts/losses/alignment.py": "345f0c031c5df897568344f613d15fa288b8c8be",
+    "src/cts/losses/sinkhorn.py": "aed5130f98f5c528a326c086d93587adf96b10d0",
+    "src/cts/methods/b2_grpo_outcome.py": "7669238aae7f31ef248882be5bfc4df37239ee21",
+    "src/cts/methods/b5_cts.py": "408bb6f75c286f47e480e38edaa574bbfbee31a4",
+    "src/cts/rl/rollout.py": "82558469f62f088bc60ef04463030e5ca3b4c904",
+    "src/cts/rl/verifier.py": "7cca2c5627ab1db4b05ebe813993a1361ce9d31a",
+    "src/cts/train/fixture_rl.py": "0d46e9376bcb32db8c50b4a1ed678b47db5e3327",
+    "src/cts/train/loop.py": "184bb9816b7446a15c989ad1da349d0318e27193",
+    "src/cts/train/main.py": "686065dc66e95900ea942c77413c7c864f6dc52c"
+  },
+  "artifact_sha256": {
+    "docs/demo/console.txt": "b47dd7c054fa95c02fefad3c35b0a138b25cad2349c16bb7932f3c1773306fb5",
+    "docs/demo/cts-fixture.gif": "e5c540b12b32914c49b4b3bdc2487c27b837eac5d8230e64a5b292d3af1fe192",
+    "docs/demo/cts-fixture.mp4": "ac7c3aa11505de339b7a17a35902e418354274bfb69af38df3f396678b8db82d",
+    "docs/demo/train.jsonl": "f2fcdb8680726252b7b1f45b4c16d66010f00b7f5e9fddf1356d7c16bafda448",
+    "docs/demo/training-receipt.json": "299cb7adfaa1e6703f446a8e7997182a1729b3dbc0a3772b280e418410fbd80d"
+  },
+  "current_source_overrides": {
+    "src/cts/losses/sinkhorn.py": "87fc282a4dbd9d411529191c5cacc9f7a3e04ef3"
+  }
+}

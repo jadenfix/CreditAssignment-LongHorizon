@@ -39,8 +39,11 @@ class DecodeCfg:
 class LocalModelAPI(Protocol):
     """Small-model interface for tests and smoke runs."""
 
-    vocab_size: int
-    hidden_size: int
+    @property
+    def vocab_size(self) -> int: ...
+
+    @property
+    def hidden_size(self) -> int: ...
 
     def forward(self, tokens: jax.Array) -> ForwardOut: ...
 

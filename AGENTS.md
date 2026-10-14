@@ -2,7 +2,7 @@
 
 ## Rules
 
-- **Layout**: source under `src/cts/`, tests under `tests/`, all generated artifacts under `artifacts/` (git-ignored).
+- **Layout**: source under `src/cts/`, tests under `tests/`, all runtime experiment outputs under `artifacts/` (git-ignored). A deliberately published README demo may live under `docs/demo/` only when it includes source-pinned provenance, exact non-claiming receipts, reproducible rendering, and an automated integrity check; it is documentation, never experiment evidence.
 - **Replay-only data**: anything in `src/cts/train/` or `src/cts/methods/` MUST consume `Quadruple` from a `ReplayShard` / `ReplayDir`. Never call a teacher API from a trainer.
 - **Two backend abstractions**: `LocalModelAPI` (smoke / unit tests) and `ScaleBackendAdapter` (Tunix / MaxText). Don't merge them.
 - **Method shape**: every method in `cts.methods` exposes `step(model, batch[, cfg]) -> (loss, metrics)`. Ablations are config toggles on top of `b5_cts`, never new methods.

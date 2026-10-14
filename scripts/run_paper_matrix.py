@@ -70,7 +70,15 @@ def _train_cell(method: str, task: str, seed: int, backend: str, max_steps: int,
     return _run(cmd, dry)
 
 
-def _eval_cell(task: str, domain: str, replay: str, out_path: Path, dry: bool) -> int:
+def _eval_cell(
+    task: str,
+    domain: str,
+    replay: str,
+    out_path: Path,
+    dry: bool,
+    gold_json: str | None = None,
+    tests_json: str | None = None,
+) -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         sys.executable,
@@ -85,6 +93,12 @@ def _eval_cell(task: str, domain: str, replay: str, out_path: Path, dry: bool) -
         "--out",
         str(out_path),
     ]
+    if gold_json:
+        cmd.extend(["--gold-json", gold_json])
+    if tests_json:
+        cmd.extend(["--tests-json", tests_json])
+    if task == "fixtures_math" and gold_json is None:
+        cmd.append("--audited-labels")
     return _run(cmd, dry)
 
 
@@ -99,7 +113,7 @@ def _replay_path_for(task: str) -> str:
     return table[task]
 
 
-def _fingerprint_for(method: str, task: str, backend: str, seed: int) -> dict:
+def _fingerprint_for(method: str, task: str, backend: str, seed: int, max_steps: int) -> dict:
     """Compute the fairness fingerprint a cell *would* use without launching it.
 
     Imported lazily so the script runs even if cts isn't fully installed (e.g.
@@ -108,7 +122,15 @@ def _fingerprint_for(method: str, task: str, backend: str, seed: int) -> dict:
     from cts.train.fairness import fingerprint_from_cfg
     from cts.train.main import _load_cfg  # type: ignore[attr-defined]
 
-    cfg = _load_cfg([f"method={method}", f"task={task}", f"backend={backend}", f"seed={seed}"])
+    cfg = _load_cfg(
+        [
+            f"method={method}",
+            f"task={task}",
+            f"backend={backend}",
+            f"seed={seed}",
+            f"trainer.max_steps={max_steps}",
+        ]
+    )
     return dataclasses.asdict(fingerprint_from_cfg(cfg))
 
 
@@ -127,6 +149,8 @@ def main() -> None:
     ap.add_argument("--max-steps", type=int, default=20)
     ap.add_argument("--out", required=True, help="Local dir or gs:// prefix")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--gold-json", help="Complete math verifier reference map")
+    ap.add_argument("--tests-json", help="Complete code verifier test bank")
     ap.add_argument(
         "--skip-train",
         action="store_true",
@@ -134,10 +158,14 @@ def main() -> None:
     )
     args = ap.parse_args()
 
+    if args.seeds < 1 or args.max_steps < 1:
+        ap.error("seeds and max-steps must be positive")
     methods = [m.strip() for m in args.methods.split(",") if m.strip()]
     for m in methods:
         if m not in METHODS:
             raise SystemExit(f"Unknown method {m!r}; choose from {METHODS}")
+    if not methods or len(set(methods)) != len(methods):
+        ap.error("methods must contain distinct, nonempty method names")
     tasks = TASK_GROUPS[args.tasks]
 
     out_root = Path(args.out)
@@ -147,7 +175,7 @@ def main() -> None:
     fps: list[tuple[str, dict]] = []
     for method in methods:
         for task, _ in tasks:
-            fp = _fingerprint_for(method, task, args.backend, seed=0)
+            fp = _fingerprint_for(method, task, args.backend, seed=0, max_steps=args.max_steps)
             fps.append((f"{method}@{task}", fp))
     ref_name, ref_fp = fps[0]
     for name, fp in fps[1:]:
@@ -163,6 +191,8 @@ def main() -> None:
                 "seeds": args.seeds,
                 "methods": methods,
                 "max_steps": args.max_steps,
+                "evaluation_kind": "archived_replay_pairs",
+                "trained_model_evaluated": False,
                 "fairness_fingerprint": ref_fp,
             },
             indent=2,
@@ -181,13 +211,18 @@ def main() -> None:
                         continue
                 out_path = out_root / f"{tag}.json"
                 replay = _replay_path_for(task)
-                rc = _eval_cell(task, domain, replay, out_path, args.dry_run)
+                rc = _eval_cell(
+                    task, domain, replay, out_path, args.dry_run, args.gold_json, args.tests_json
+                )
                 if rc != 0:
                     failures.append(f"eval:{tag}")
 
     if failures:
         print(f"\n[matrix] {len(failures)} cell(s) failed: {failures}", file=sys.stderr)
         sys.exit(1)
+    print(
+        "[matrix] Evaluation scores archived replay pairs; these are not trained-model comparison results."
+    )
     print(f"\n[matrix] OK — {len(methods) * len(tasks) * args.seeds} cells under {out_root}")
 
 

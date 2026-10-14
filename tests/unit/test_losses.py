@@ -5,7 +5,7 @@ import pytest
 from cts.losses.alignment import AlignmentCfg, alignment_loss
 from cts.losses.decode_anchor import decode_anchor_loss
 from cts.losses.energy_loss import energy_contrastive_loss
-from cts.losses.sinkhorn import sinkhorn_divergence_loss
+from cts.losses.sinkhorn import _ott_divergence_value, sinkhorn_divergence_loss
 from cts.losses.soft_dtw import soft_dtw_loss
 
 
@@ -30,6 +30,14 @@ def test_sinkhorn_fallback_symmetry_nonneg():
     assert jnp.abs(v_ab - v_ba) < 1e-2
     assert v_ab >= -1e-3
     assert jnp.abs(v_aa) < 1e-2
+
+
+def test_ott_divergence_return_compatibility():
+    class LegacyResult:
+        divergence = jnp.asarray(1.5)
+
+    assert _ott_divergence_value((jnp.asarray(2.5), object())) == 2.5
+    assert _ott_divergence_value(LegacyResult()) == 1.5
 
 
 def test_soft_dtw_monotone_in_gamma():
@@ -80,3 +88,74 @@ def test_energy_contrastive_has_grad():
     assert jnp.isfinite(loss)
     g = jax.grad(lambda x: energy_contrastive_loss(x, eg))(eb)
     assert g.shape == eb.shape
+
+
+@pytest.mark.needs_ott
+@pytest.mark.parametrize("tau", [None, 0.8])
+def test_sinkhorn_uses_installed_ott_contract(tau, monkeypatch):
+    pytest.importorskip("ott")
+    from ott.geometry import pointcloud
+    from ott.tools.sinkhorn_divergence import sinkhorn_divergence
+
+    from cts.losses import sinkhorn
+
+    a = jnp.asarray([[[0.0, 0.0], [1.0, 0.0], [2.0, 1.0]]])
+    b = a + 0.4
+    kwargs = {"max_iterations": 50}
+    if tau is not None:
+        kwargs.update(tau_a=tau, tau_b=tau)
+    expected = sinkhorn_divergence(
+        pointcloud.PointCloud,
+        x=sinkhorn._time_augment(a, 0.2)[0],
+        y=sinkhorn._time_augment(b, 0.2)[0],
+        epsilon=0.1,
+        solve_kwargs=kwargs,
+    )[0]
+
+    def forbidden_fallback(*args, **kwargs):
+        raise AssertionError("Installed OTT must not silently use the balanced fallback")
+
+    monkeypatch.setattr(sinkhorn, "_fallback_sinkhorn", forbidden_fallback)
+    actual = sinkhorn.sinkhorn_divergence_loss(a, b, unbalanced_tau=tau)
+    assert jnp.isfinite(actual)
+    assert jnp.allclose(actual, expected)
+    gradient = jax.grad(lambda x: sinkhorn.sinkhorn_divergence_loss(x, b, unbalanced_tau=tau))(a)
+    assert jnp.all(jnp.isfinite(gradient))
+
+
+@pytest.mark.needs_ott
+@pytest.mark.parametrize("error", [RuntimeError, TypeError, ImportError])
+def test_sinkhorn_solver_errors_propagate(monkeypatch, error):
+    pytest.importorskip("ott")
+    import importlib
+
+    module = importlib.import_module("ott.tools.sinkhorn_divergence")
+
+    def broken_solver(*args, **kwargs):
+        raise error("solver failed")
+
+    monkeypatch.setattr(module, "sinkhorn_divergence", broken_solver)
+    a = jnp.ones((1, 2, 2))
+    with pytest.raises(error, match="solver failed"):
+        sinkhorn_divergence_loss(a, a)
+
+
+def test_sinkhorn_missing_optional_dependency(monkeypatch):
+    import builtins
+
+    original_import = builtins.__import__
+
+    def without_ott(name, *args, **kwargs):
+        if name == "ott.geometry":
+            raise ImportError("OTT unavailable")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", without_ott)
+    a = jnp.ones((1, 2, 2))
+    assert jnp.allclose(
+        sinkhorn_divergence_loss(a, a), sinkhorn_divergence_loss(a, a, use_ott=False)
+    )
+    with pytest.raises(ImportError, match="Unbalanced transport requires"):
+        sinkhorn_divergence_loss(a, a, unbalanced_tau=0.8)
+    with pytest.raises(ValueError, match="Unbalanced transport requires"):
+        sinkhorn_divergence_loss(a, a, use_ott=False, unbalanced_tau=0.8)
