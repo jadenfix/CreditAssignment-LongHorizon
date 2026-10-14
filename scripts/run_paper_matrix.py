@@ -70,7 +70,15 @@ def _train_cell(method: str, task: str, seed: int, backend: str, max_steps: int,
     return _run(cmd, dry)
 
 
-def _eval_cell(task: str, domain: str, replay: str, out_path: Path, dry: bool) -> int:
+def _eval_cell(
+    task: str,
+    domain: str,
+    replay: str,
+    out_path: Path,
+    dry: bool,
+    gold_json: str | None = None,
+    tests_json: str | None = None,
+) -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         sys.executable,
@@ -85,7 +93,11 @@ def _eval_cell(task: str, domain: str, replay: str, out_path: Path, dry: bool) -
         "--out",
         str(out_path),
     ]
-    if task == "fixtures_math":
+    if gold_json:
+        cmd.extend(["--gold-json", gold_json])
+    if tests_json:
+        cmd.extend(["--tests-json", tests_json])
+    if task == "fixtures_math" and gold_json is None:
         cmd.append("--audited-labels")
     return _run(cmd, dry)
 
@@ -129,6 +141,8 @@ def main() -> None:
     ap.add_argument("--max-steps", type=int, default=20)
     ap.add_argument("--out", required=True, help="Local dir or gs:// prefix")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--gold-json", help="Complete math verifier reference map")
+    ap.add_argument("--tests-json", help="Complete code verifier test bank")
     ap.add_argument(
         "--skip-train",
         action="store_true",
@@ -189,7 +203,9 @@ def main() -> None:
                         continue
                 out_path = out_root / f"{tag}.json"
                 replay = _replay_path_for(task)
-                rc = _eval_cell(task, domain, replay, out_path, args.dry_run)
+                rc = _eval_cell(
+                    task, domain, replay, out_path, args.dry_run, args.gold_json, args.tests_json
+                )
                 if rc != 0:
                     failures.append(f"eval:{tag}")
 

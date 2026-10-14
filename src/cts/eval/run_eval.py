@@ -58,7 +58,14 @@ def evaluate(
         str(k): delta_critique([q for q in quads if bucket_horizon(q) == k], v["y0"], v["y1"])
         for k, v in buckets.items()
     }
-    return {"headline": headline, "bootstrap": boot, "wilcoxon": wx, "buckets": per_bucket}
+    return {
+        "evaluation_kind": "archived_audit_labels" if audited_labels else "verified_archived_pairs",
+        "trained_model_evaluated": False,
+        "headline": headline,
+        "bootstrap": boot,
+        "wilcoxon": wx,
+        "buckets": per_bucket,
+    }
 
 
 def main() -> None:
