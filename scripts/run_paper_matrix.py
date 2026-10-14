@@ -85,6 +85,8 @@ def _eval_cell(task: str, domain: str, replay: str, out_path: Path, dry: bool) -
         "--out",
         str(out_path),
     ]
+    if task == "fixtures_math":
+        cmd.append("--audited-labels")
     return _run(cmd, dry)
 
 
@@ -134,10 +136,14 @@ def main() -> None:
     )
     args = ap.parse_args()
 
+    if args.seeds < 1 or args.max_steps < 1:
+        ap.error("seeds and max-steps must be positive")
     methods = [m.strip() for m in args.methods.split(",") if m.strip()]
     for m in methods:
         if m not in METHODS:
             raise SystemExit(f"Unknown method {m!r}; choose from {METHODS}")
+    if not methods or len(set(methods)) != len(methods):
+        ap.error("methods must contain distinct, nonempty method names")
     tasks = TASK_GROUPS[args.tasks]
 
     out_root = Path(args.out)
@@ -163,6 +169,8 @@ def main() -> None:
                 "seeds": args.seeds,
                 "methods": methods,
                 "max_steps": args.max_steps,
+                "evaluation_kind": "archived_replay_pairs",
+                "trained_model_evaluated": False,
                 "fairness_fingerprint": ref_fp,
             },
             indent=2,
@@ -188,6 +196,9 @@ def main() -> None:
     if failures:
         print(f"\n[matrix] {len(failures)} cell(s) failed: {failures}", file=sys.stderr)
         sys.exit(1)
+    print(
+        "[matrix] Evaluation scores archived replay pairs; these are not trained-model comparison results."
+    )
     print(f"\n[matrix] OK — {len(methods) * len(tasks) * args.seeds} cells under {out_root}")
 
 

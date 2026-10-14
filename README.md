@@ -157,3 +157,15 @@ This is an optimizer/integration fixture, not a benchmark. The model is tiny and
 [![CTS fixture workflow: replay to rollout to parameter update](docs/demo/cts-fixture.gif)](docs/demo/cts-fixture.mp4)
 
 The checked-in [demo receipt](docs/demo/README.md) pins the exact source commit, input blobs, command, logs, artifact digests, and verification procedure.
+
+### Matrix evidence boundary
+
+`run_paper_matrix.py` currently trains each requested method, then evaluates archived
+replay pairs. It does not load the resulting model for evaluation. Fixture runs
+explicitly report human-audited archive labels; they are dispatch and optimizer
+checks, not a paper comparison. Other evaluation calls require a complete gold
+answer or test-bank map and fail when references are absent. Aggregation resamples
+each recorded seed summary once and reports seed counts; it does not manufacture
+instance counts by duplicating means. Large-model / TPU results and trained-model
+quality remain unverified until real checkpoint inference and independent test
+references are wired and executed.
