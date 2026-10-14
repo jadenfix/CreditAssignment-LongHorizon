@@ -113,7 +113,7 @@ def _replay_path_for(task: str) -> str:
     return table[task]
 
 
-def _fingerprint_for(method: str, task: str, backend: str, seed: int) -> dict:
+def _fingerprint_for(method: str, task: str, backend: str, seed: int, max_steps: int) -> dict:
     """Compute the fairness fingerprint a cell *would* use without launching it.
 
     Imported lazily so the script runs even if cts isn't fully installed (e.g.
@@ -122,7 +122,15 @@ def _fingerprint_for(method: str, task: str, backend: str, seed: int) -> dict:
     from cts.train.fairness import fingerprint_from_cfg
     from cts.train.main import _load_cfg  # type: ignore[attr-defined]
 
-    cfg = _load_cfg([f"method={method}", f"task={task}", f"backend={backend}", f"seed={seed}"])
+    cfg = _load_cfg(
+        [
+            f"method={method}",
+            f"task={task}",
+            f"backend={backend}",
+            f"seed={seed}",
+            f"trainer.max_steps={max_steps}",
+        ]
+    )
     return dataclasses.asdict(fingerprint_from_cfg(cfg))
 
 
@@ -167,7 +175,7 @@ def main() -> None:
     fps: list[tuple[str, dict]] = []
     for method in methods:
         for task, _ in tasks:
-            fp = _fingerprint_for(method, task, args.backend, seed=0)
+            fp = _fingerprint_for(method, task, args.backend, seed=0, max_steps=args.max_steps)
             fps.append((f"{method}@{task}", fp))
     ref_name, ref_fp = fps[0]
     for name, fp in fps[1:]:
