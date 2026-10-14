@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,6 +28,26 @@ jobs:
         run: uv run pyright
       - name: Test
         run: uv run pytest -q -m "not slow"
+      - name: Execute real local CTS optimizer and replay diagnostics
+        env:
+          JAX_PLATFORMS: cpu
+          XLA_PYTHON_CLIENT_PREALLOCATE: 'false'
+        run: |
+          uv run python -m cts.train.main \
+            method=cts task=fixtures_math backend=local_nano \
+            trainer.max_steps=2 trainer.warmup_steps=0 trainer.batch_size=2 \
+            trainer.log_every=1 method_cfg.group_size=3 \
+            method_cfg.max_new_tokens=8 method_cfg.max_len=48 \
+            method_cfg.alignment.num_iters=5 method_cfg.alignment.use_ott=false \
+            out_dir=artifacts/ci/cts-fixture
+          uv run python -m cts.eval.run_eval \
+            --replay src/cts/data/fixtures/gsm8k_tiny.jsonl --split test \
+            --domain math --audited-labels --out artifacts/ci/replay-diagnostic.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: local-cts-execution-${{ github.sha }}
+          path: artifacts/ci/
+          if-no-files-found: error
       - name: Install media verifier
         run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ffmpeg
       - name: Verify published fixture demo
